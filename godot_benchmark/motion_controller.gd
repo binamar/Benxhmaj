@@ -22,7 +22,7 @@ enum HandPose {
 	TENSE_SPLAY,
 }
 
-const MOTION_ORDER: Array[int] = [
+const MOTION_ORDER := [
 	Motion.IDLE,
 	Motion.NOD_LOOK,
 	Motion.WAVE,
