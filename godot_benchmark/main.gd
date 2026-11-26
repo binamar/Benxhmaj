@@ -82,6 +82,7 @@ var hovered_char_idx: int = -1
 
 # Pedestal click ripple feedback: { "pos": Vector2, "age": float }
 var _ripples: Array[Dictionary] = []
+var _stage_dirty: bool = true
 
 # Bottom HUD controls
 var _hud_layer: CanvasLayer
@@ -141,28 +142,34 @@ func _process(delta: float) -> void:
 			if float(_ripples[i]["age"]) >= 0.45:
 				_ripples.remove_at(i)
 			i -= 1
+		_stage_dirty = true
 
-	queue_redraw()
+	if _stage_dirty:
+		_stage_dirty = false
+		queue_redraw()
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
-		var mpos: Vector2 = get_global_mouse_position()
+		var mm := event as InputEventMouseMotion
+		var mpos: Vector2 = get_canvas_transform().affine_inverse() * mm.position
 		var hit_idx: int = _hit_test_characters(mpos)
 		if hit_idx != hovered_char_idx:
 			hovered_char_idx = hit_idx
+			_stage_dirty = true
 			Input.set_default_cursor_shape(
 				Input.CURSOR_POINTING_HAND if hovered_char_idx != -1 else Input.CURSOR_ARROW
 			)
 	elif event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed:
-			var mpos: Vector2 = get_global_mouse_position()
+			var mpos: Vector2 = get_canvas_transform().affine_inverse() * mb.position
 			var hit_idx: int = _hit_test_characters(mpos)
 			if hit_idx != -1:
 				motion_controller.next_motion()
 				_sync_button_states()
 				_ripples.append({"pos": characters[hit_idx].position, "age": 0.0})
+				_stage_dirty = true
 				get_viewport().set_input_as_handled()
 	elif event is InputEventKey and event.pressed and not event.echo:
 		var kev := event as InputEventKey
@@ -523,7 +530,7 @@ func _select_motion(motion_id: int) -> void:
 func _select_backdrop(bg_idx: int) -> void:
 	backdrop_mode = clampi(bg_idx, 0, BACKDROP_THEMES.size() - 1)
 	_sync_button_states()
-	queue_redraw()
+	_stage_dirty = true
 
 
 func _toggle_view_mode() -> void:
@@ -589,7 +596,7 @@ func _apply_layout() -> void:
 		if ch.visible:
 			ch.call("set_anchors", current_anchors)
 
-	queue_redraw()
+	_stage_dirty = true
 
 
 func _sync_button_states() -> void:

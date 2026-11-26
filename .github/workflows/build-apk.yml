@@ -26,6 +26,9 @@ jobs:
 
           SDK="${ANDROID_HOME:-/usr/lib/android-sdk}"
           JAVA="$(dirname "$(dirname "$(readlink -f "$(which javac)")")")"
+          export ANDROID_HOME="$SDK"
+          export ANDROID_SDK_ROOT="$SDK"
+          export JAVA_HOME="$JAVA"
           echo "SDK=$SDK JAVA=$JAVA"
 
           echo "== Install matching Android SDK packages =="
@@ -65,12 +68,42 @@ jobs:
           cat "$HOME/.config/godot/editor_settings-4.3.tres" | head -40
 
           cd godot_benchmark
-          mkdir -p build
-          godot --headless --import || true
-          echo "== EXPORT =="
-          godot --headless --verbose --export-debug "Android" build/benchmark.apk 2>&1 | grep -v "not exposed" | tail -n 80
+          mkdir -p build android/build
+
+          echo "== Install Godot 4.3 Android Build Template for Gradle =="
+          TEMPLATE_ZIP="$HOME/.local/share/godot/export_templates/4.3.stable/android_source.zip"
+          test -f "$TEMPLATE_ZIP"
+          unzip -q -o "$TEMPLATE_ZIP" -d android/build
+          chmod +x android/build/gradlew || true
+          touch android/.gdignore
+          printf "4.3.stable\n" > android/.build_version
+          if [ ! -f android/build/.build_version ]; then
+            printf "4.3.stable\n" > android/build/.build_version
+          fi
+
+          echo "== Import resources & validate scripts =="
+          godot --headless --import --quit
+          if ! godot --headless --quit --path . 2>&1 | tee import_check.log; then
+            cat import_check.log
+            exit 1
+          fi
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" import_check.log; then
+            echo "GDScript parse/script errors detected!"
+            exit 1
+          fi
+
+          echo "== EXPORT APK (Gradle) =="
+          if ! godot --headless --verbose --export-debug "Android" build/benchmark.apk > export.log 2>&1; then
+            tail -n 150 export.log
+            exit 1
+          fi
+          grep -v "not exposed" export.log | tail -n 100 || true
           ls -la build
           test -f build/benchmark.apk
+
+          echo "== VERIFY APK ZIP & SIGNATURE =="
+          unzip -tq build/benchmark.apk
+          "$SDK/build-tools/34.0.0/apksigner" verify --verbose --print-certs build/benchmark.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -84,6 +117,7 @@ jobs:
           tag_name: v1.0.${{ github.run_number }}
           name: Benchmark APK v1.0.${{ github.run_number }}
           body: |
-            Android APK (debug-signed) built automatically with Godot 4.3 via GitHub Actions.
+            Android APK (Gradle-built, debug-signed, verified with unzip & apksigner) built with Godot 4.3.
+            Download `benchmark.apk` directly below (note: workflow artifacts are wrapped in a `.zip` by GitHub Actions).
             Commit: ${{ github.sha }}
           files: godot_benchmark/build/benchmark.apk

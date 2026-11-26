@@ -206,13 +206,14 @@ func _draw() -> void:
 	# Fluttering red explorer kerchief (secondary_lag!)
 	var kerchief_xf := torso_xf * _xform(Vector2(-8.0 + cx * 0.5, -torso_h + 2.0), lag.rot * 0.85)
 	draw_set_transform_matrix(kerchief_xf)
-	var k_tip := Vector2(-28.0 + lag.x * 1.05 + lag.flutter, 34.0 + lag.y * 0.75)
+	var k_tip := Vector2(-26.0 + clampf(lag.x, -26.0, 26.0) * 0.85 + lag.flutter, 36.0 + maxf(-14.0, lag.y * 0.55))
+	var k_mid := Vector2(-12.0 + clampf(lag.x, -26.0, 26.0) * 0.35, 22.0 + maxf(-8.0, lag.y * 0.25))
 	var kerchief_poly := PackedVector2Array([
-		Vector2(2.0, -2.0),
-		Vector2(18.0, 4.0),
-		Vector2(6.0, 12.0),
+		Vector2(0.0, -2.0),
+		Vector2(16.0, 3.0),
+		Vector2(4.0, 12.0),
 		k_tip,
-		Vector2(-10.0 + lag.x * 0.45, 22.0 + lag.y * 0.35),
+		k_mid,
 	])
 	draw_colored_polygon(kerchief_poly, KERCHIEF)
 	draw_polyline(_closed_outline(kerchief_poly), INK, LINE_W, true)

@@ -312,7 +312,7 @@ func _draw_ukiyoe_eye(
 		return
 
 	var scl := PackedVector2Array([
-		Vector2(-w, 0.5), Vector2(0.0, -h), Vector2(w, -0.8), Vector2(0.0, h * 0.85),
+		Vector2(-w, h * 0.16), Vector2(0.0, -h), Vector2(w, -h * 0.24), Vector2(0.0, h * 0.85),
 	])
 	draw_colored_polygon(scl, Color.WHITE)
 	var gx: float = clampf(eyes.look_x * 2.4 * foreshorten_x, -w * 0.4, w * 0.4)

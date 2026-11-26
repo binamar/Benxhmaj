@@ -6,3 +6,7 @@ coverage/
 *.log
 .env*
 !.env.example
+godot_benchmark/.godot/
+godot_benchmark/android/
+godot_benchmark/build/
+
