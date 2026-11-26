@@ -30,6 +30,16 @@ jobs:
           SDK="${ANDROID_HOME:-/usr/lib/android-sdk}"
           JAVA="$(dirname "$(dirname "$(readlink -f "$(which javac)")")")"
           echo "SDK=$SDK JAVA=$JAVA"
+          ls -la "$SDK" || true
+          ls "$SDK/build-tools" "$SDK/platforms" "$SDK/platform-tools" || true
+
+          echo "== Install matching Android SDK packages =="
+          SDKMANAGER="$(ls "$SDK"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | head -n1 || true)"
+          if [ -z "$SDKMANAGER" ]; then SDKMANAGER="$(which sdkmanager)"; fi
+          echo "sdkmanager=$SDKMANAGER"
+          yes | "$SDKMANAGER" --sdk_root="$SDK" --licenses > /dev/null || true
+          "$SDKMANAGER" --sdk_root="$SDK" "platform-tools" "build-tools;34.0.0" "platforms;android-34"
+          ls "$SDK/build-tools" "$SDK/platforms"
 
           if [ ! -f "$HOME/debug.keystore" ]; then
             keytool -genkeypair -v -keystore "$HOME/debug.keystore" \
