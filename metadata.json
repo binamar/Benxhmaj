@@ -1,0 +1,8 @@
+{
+  "name": "2D Character Style & Motion Benchmark",
+  "description": "Procedural 2D character style and motion comparison sandbox featuring three distinct art styles driven by a shared rig controller.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
